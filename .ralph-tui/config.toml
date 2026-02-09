@@ -6,6 +6,9 @@ autoCommit = false
 subagentTracingDetail = "full"
 
 [agentOptions]
+provider = "opencode"
+model = "kimi-k2.5-free"
+
 [trackerOptions]
 beadsDir = ".beads"
 labels = ""
