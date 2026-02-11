@@ -4,15 +4,31 @@ This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get sta
 
 ## Version Control
 
-This project uses **Jujutsu (jj)** for version control. **Always prefer `jj` commands over `git` commands.**
+⚠️ **CRITICAL: This project uses Jujutsu (jj) for version control. NEVER use git commands directly. Use jj instead.**
+
+### Committing Changes
+
+When asked to commit or push changes, use these jj commands:
 
 ```bash
-jj status            # Check working copy status
-jj log               # View commit history
-jj describe -m "..." # Describe current commit
-jj bookmark set <bookmark> -r <revision> # Set bookmark (alternative to git branch)
+jj status            # Check working copy status (NOT git status)
+jj diff              # View changes (NOT git diff)
+jj describe -m "..." # Set commit message for current change
+jj bookmark set main -r @  # Move main bookmark to current change
 jj git push          # Push to remote
 ```
+
+### jj vs git Quick Reference
+
+| Don't use | Use instead |
+|-----------|-------------|
+| `git status` | `jj status` |
+| `git diff` | `jj diff` |
+| `git add` | (not needed - jj auto-tracks) |
+| `git commit` | `jj describe -m "..."` |
+| `git log` | `jj log` |
+| `git push` | `jj git push` |
+| `git branch` | `jj bookmark` |
 
 ## Quick Reference
 
@@ -124,19 +140,6 @@ bd sync               # Commit and push changes
 - **Priority**: P0=critical, P1=high, P2=medium, P3=low, P4=backlog (use numbers, not words)
 - **Types**: task, bug, feature, epic, question, docs
 - **Blocking**: `bd dep add <issue> <depends-on>` to add dependencies
-
-### Session Protocol
-
-**Before ending any session, run this checklist:**
-
-```bash
-git status              # Check what changed
-git add <files>         # Stage code changes
-bd sync                 # Commit beads changes
-git commit -m "..."     # Commit code
-bd sync                 # Commit any new beads changes
-git push                # Push to remote
-```
 
 ### Best Practices
 
