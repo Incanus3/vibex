@@ -1,4 +1,8 @@
 defmodule Vibex.Accounts.User do
+  @moduledoc """
+  User schema and changesets for registration and password management.
+  """
+
   use Ecto.Schema
   import Ecto.Changeset
 

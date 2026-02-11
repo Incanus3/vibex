@@ -1,4 +1,8 @@
 defmodule Vibex.Accounts.UserToken do
+  @moduledoc """
+  Generates and verifies tokens for sessions, magic links, and email changes.
+  """
+
   use Ecto.Schema
   import Ecto.Query
   alias Vibex.Accounts.UserToken

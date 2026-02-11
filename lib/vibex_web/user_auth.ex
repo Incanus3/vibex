@@ -1,4 +1,8 @@
 defmodule VibexWeb.UserAuth do
+  @moduledoc """
+  Handles user authentication plugs and session management.
+  """
+
   use VibexWeb, :verified_routes
 
   import Plug.Conn

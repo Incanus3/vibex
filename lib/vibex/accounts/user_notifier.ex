@@ -1,4 +1,8 @@
 defmodule Vibex.Accounts.UserNotifier do
+  @moduledoc """
+  Delivers notification emails to users.
+  """
+
   import Swoosh.Email
 
   alias Vibex.Mailer
