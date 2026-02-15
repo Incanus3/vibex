@@ -31,6 +31,36 @@
 
 ---
 
+## Session: 2026-02-15
+
+### Town Hall Design
+
+- **Decision**: Town Hall is the main settlement building and progression gateway
+- **Level cap**: Other buildings capped at `Town Hall level + 2`
+- **Upgrade prerequisites**: Tied to stage unlock conditions (see Stage Unlocks table)
+- **Role**: Town Hall level gates access to new building types and limits other buildings
+
+### Building Position Format
+
+- **Decision**: Use `{row, col}` tuple instead of single integer
+- **Rationale**: 
+  - More readable for debugging (e.g., `{2, 3}` vs position `15`)
+  - Easier to expand grid later
+  - Database stores as two columns: `position_row`, `position_col`
+
+### Building Instance Limits
+
+- **Decision**: No limits for MVP
+- **Rationale**: Keep simple, observe player behavior, add constraints post-MVP if needed
+- **Future option**: Could add soft limits via UI recommendations
+
+### Missions Scope
+
+- **Decision**: Keep missions in PRD but defer count and specifics
+- **Rationale**: Core mechanic needed, but exact mission content can be determined during implementation
+
+---
+
 ### Stage Unlock Iterations
 
 We went through several iterations on the stage unlock order:
@@ -56,14 +86,23 @@ We went through several iterations on the stage unlock order:
 4. Tavern + Heroes
 5. Barracks + Militia
 
-**Final** (user feedback: basic militia before iron, crystal at end):
+**Revision 3** (user feedback: basic militia before iron, crystal at end):
 1. Basic resources (Food, Wood, Stone, Gold + production buildings)
 2. Barracks + Militia (basic unit)
 3. Iron + Mine + Iron Forge + Swordsman, Archer
 4. Watchtower + Missions
 5. Crystal + Crystal Refinery + Crystal Vault + Mage
 
-**Rationale for final order**: Creates natural military progression: militia → iron units → mage elites. Basic units cost only gold/food, iron unlocks armored units, crystal unlocks elite magic units.
+**Final** (2026-02-15: Town Hall as progression gateway):
+| Stage | Buildings | Units | Resources | Requirements |
+|-------|-----------|-------|-----------|--------------|
+| 1 | Town Hall, Farm, Lumber Mill, Quarry, Granary, Warehouse, Treasury | - | Gold, Wood, Stone, Food | Starting stage |
+| 2 | Barracks | Militia | - | Town Hall level 2, total production >= 50 |
+| 3 | Mine, Iron Forge | Swordsman, Archer | Iron | Town Hall level 3, Barracks built, 10+ militia |
+| 4 | Watchtower | - | - | Town Hall level 4, Iron Forge built, iron production >= 20 |
+| 5 | Crystal Refinery, Crystal Vault | Mage | Crystal | Town Hall level 5, 5+ completed missions |
+
+**Rationale for final order**: Town Hall gates all progression. Creates natural military progression: militia → iron units → mage elites. Basic units cost only gold/food, iron unlocks armored units, crystal unlocks elite magic units. Watchtower requirement for stage 4 ensures missions are accessible when unlocked.
 
 ---
 

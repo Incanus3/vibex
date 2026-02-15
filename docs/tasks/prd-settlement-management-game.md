@@ -12,6 +12,27 @@ Vibex is an idle/incremental settlement management game built with Phoenix LiveV
 - Deliver stage-based progression that unlocks new content
 - Support future expansion to multiple settlements and heroes
 
+## Stage Unlocks
+
+| Stage | Buildings | Units | Resources | Requirements |
+|-------|-----------|-------|-----------|--------------|
+| 1 | Town Hall, Farm, Lumber Mill, Quarry, Granary, Warehouse, Treasury | - | Gold, Wood, Stone, Food | Starting stage |
+| 2 | Barracks | Militia | - | Town Hall level 2, total production >= 50 |
+| 3 | Mine, Iron Forge | Swordsman, Archer | Iron | Town Hall level 3, Barracks built, 10+ militia |
+| 4 | Watchtower | - | - | Town Hall level 4, Iron Forge built, iron production >= 20 |
+| 5 | Crystal Refinery, Crystal Vault | Mage | Crystal | Town Hall level 5, 5+ completed missions |
+
+## Town Hall
+
+The Town Hall is the main settlement building and progression gateway:
+- **Building level cap**: Other buildings capped at `Town Hall level + 2`
+- **Upgrade prerequisites**: Tied to stage unlock conditions (see table above)
+- **Central role**: Town Hall level gates access to new building types
+
+## Building Instances
+
+No limits on building instances per type for MVP. Players may build freely within the 36-slot grid. Constraints can be added post-MVP based on player behavior.
+
 ## Quality Gates
 
 These commands must pass for every user story:
@@ -45,7 +66,7 @@ PHASE 4: POLISH (new player experience + notifications)
 
 Goal: Create all visual components with hardcoded mock data. No database, no GenServer, just static UI that can be navigated.
 
-### US-013: Create SettlementLive Overview Tab (Mock)
+### US-001: Create SettlementLive Overview Tab (Mock)
 **Order: 1**
 **Description:** As a player, I want to see my settlement overview so that I understand my current state.
 
@@ -68,7 +89,7 @@ Goal: Create all visual components with hardcoded mock data. No database, no Gen
 }
 ```
 
-### US-014: Create Buildings Tab (Mock)
+### US-002: Create Buildings Tab (Mock)
 **Order: 2**
 **Description:** As a player, I want to see a building grid so that I can visualize my settlement layout.
 
@@ -84,15 +105,16 @@ Goal: Create all visual components with hardcoded mock data. No database, no Gen
 ```elixir
 %{
   buildings: [
-    %{id: 1, type: :farm, level: 2, position: 1},
-    %{id: 2, type: :lumber_mill, level: 1, position: 7},
-    %{id: 3, type: :quarry, level: 1, position: 13}
+    %{id: 1, type: :town_hall, level: 1, position: {1, 1}},
+    %{id: 2, type: :farm, level: 2, position: {1, 2}},
+    %{id: 3, type: :lumber_mill, level: 1, position: {2, 1}},
+    %{id: 4, type: :quarry, level: 1, position: {2, 2}}
   ],
-  grid_size: 36
+  grid_size: {6, 6}
 }
 ```
 
-### US-015: Create Units Tab (Mock)
+### US-003: Create Units Tab (Mock)
 **Order: 3**
 **Description:** As a player, I want to see my army so that I know what units I have.
 
@@ -117,7 +139,7 @@ Goal: Create all visual components with hardcoded mock data. No database, no Gen
 }
 ```
 
-### US-016: Create Missions Tab (Mock)
+### US-004: Create Missions Tab (Mock)
 **Order: 4**
 **Description:** As a player, I want to see available missions so that I can plan my activities.
 
@@ -142,7 +164,9 @@ Goal: Create all visual components with hardcoded mock data. No database, no Gen
 }
 ```
 
-### US-017: Add Tab Navigation
+Note: Mission content is placeholder for MVP. Count and specifics TBD.
+
+### US-005: Add Tab Navigation
 **Order: 5**
 **Description:** As a player, I want to navigate between tabs so that I can access all game features.
 
@@ -162,7 +186,7 @@ Goal: Create all visual components with hardcoded mock data. No database, no Gen
 
 Goal: Add persistence and real-time resource calculation. Overview tab becomes "live" with actual data.
 
-### US-001: Create Settlement Context and Schema
+### US-006: Create Settlement Context and Schema
 **Order: 6**
 **Description:** As a developer, I want a Settlement schema with resources and storage fields so that player state can be persisted.
 
@@ -172,7 +196,7 @@ Goal: Add persistence and real-time resource calculation. Overview tab becomes "
 - [ ] Add migration for `settlements` table
 - [ ] `mix test && mix credo --strict` pass
 
-### US-005: Implement SettlementServer GenServer
+### US-007: Implement SettlementServer GenServer
 **Order: 7**
 **Description:** As a developer, I want a GenServer to manage settlement state so that resources can be calculated in real-time.
 
@@ -185,7 +209,7 @@ Goal: Add persistence and real-time resource calculation. Overview tab becomes "
 - [ ] Add SettlementRegistry to application supervision tree
 - [ ] `mix test && mix credo --strict` pass
 
-### US-006: Implement Resource Calculation
+### US-008: Implement Resource Calculation
 **Order: 8**
 **Description:** As a developer, I want resources to accumulate over time based on production buildings.
 
@@ -197,7 +221,7 @@ Goal: Add persistence and real-time resource calculation. Overview tab becomes "
 - [ ] Production formula: `base × 1.5^(level - 1)`
 - [ ] `mix test && mix credo --strict` pass
 
-### US-019: Route SettlementLive with Authentication
+### US-009: Route SettlementLive with Authentication
 **Order: 9**
 **Description:** As a player, I want the game to be at the root path so that I can start playing immediately after login.
 
@@ -219,18 +243,18 @@ Goal: Add persistence and real-time resource calculation. Overview tab becomes "
 
 Goal: Add building construction, unit recruitment, and mission systems. All tabs become functional.
 
-### US-002: Create Building Schema and Context
+### US-010: Create Building Schema and Context
 **Order: 10**
 **Description:** As a developer, I want a Building schema so that settlement structures can be stored.
 
 **Acceptance Criteria:**
-- [ ] Create `Vibex.Buildings.Building` schema with `settlement_id`, `type`, `level`, `position`
+- [ ] Create `Vibex.Buildings.Building` schema with `settlement_id`, `type`, `level`, `position` (tuple {row, col})
 - [ ] Create `Vibex.Buildings` context module
-- [ ] Add migration for `buildings` table
+- [ ] Add migration for `buildings` table with position as composite type or two columns
 - [ ] Building type is an Ecto enum with all building types defined
 - [ ] `mix test && mix credo --strict` pass
 
-### US-003: Create Unit Schema and Context
+### US-011: Create Unit Schema and Context
 **Order: 11**
 **Description:** As a developer, I want a Unit schema so that player armies can be stored.
 
@@ -241,7 +265,7 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Unit type is an Ecto enum with militia, swordsman, archer, mage
 - [ ] `mix test && mix credo --strict` pass
 
-### US-004: Create Mission and MissionAssignment Schemas
+### US-012: Create Mission and MissionAssignment Schemas
 **Order: 12**
 **Description:** As a developer, I want Mission schemas so that missions and player progress can be stored.
 
@@ -252,7 +276,7 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Add migrations for `missions` and `mission_assignments` tables
 - [ ] `mix test && mix credo --strict` pass
 
-### US-007: Implement Building Construction
+### US-013: Implement Building Construction
 **Order: 13**
 **Description:** As a player, I want to construct buildings so that my settlement grows.
 
@@ -265,7 +289,7 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Wire Buildings tab to real construction actions
 - [ ] `mix test && mix credo --strict` pass
 
-### US-008: Implement Building Upgrades
+### US-014: Implement Building Upgrades
 **Order: 14**
 **Description:** As a player, I want to upgrade buildings so that production increases.
 
@@ -274,10 +298,12 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Upgrade cost formula: `base_cost × 1.8^(level - 1)`
 - [ ] Upgrade deducts resources
 - [ ] Upgrade fails if insufficient resources or at max level (10)
+- [ ] Building level capped at Town Hall level + 2 (except Town Hall itself)
+- [ ] Town Hall upgrades require stage-specific prerequisites (see Stage Unlocks table)
 - [ ] Wire Buildings tab upgrade modal to real actions
 - [ ] `mix test && mix credo --strict` pass
 
-### US-009: Implement Unit Recruitment
+### US-015: Implement Unit Recruitment
 **Order: 15**
 **Description:** As a player, I want to recruit units so that I can build an army.
 
@@ -290,18 +316,18 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Wire Units tab to real recruitment actions
 - [ ] `mix test && mix credo --strict` pass
 
-### US-012: Seed Story Missions
+### US-016: Seed Story Missions
 **Order: 16**
 **Description:** As a developer, I want predetermined missions so players have early-game content.
 
 **Acceptance Criteria:**
-- [ ] Create priv/repo/seeds.exs with 10 story missions
+- [ ] Create priv/repo/seeds.exs with story missions (count TBD)
 - [ ] Missions span tiers 1-5
 - [ ] Each mission has name, tier, duration, rewards, difficulty
 - [ ] `mix run priv/repo/seeds.exs` populates missions table
 - [ ] `mix test && mix credo --strict` pass
 
-### US-011: Implement Mission System
+### US-017: Implement Mission System
 **Order: 17**
 **Description:** As a player, I want to send units on missions so that I earn rewards.
 
@@ -315,7 +341,7 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Wire Missions tab to real mission actions
 - [ ] `mix test && mix credo --strict` pass
 
-### US-010: Implement Progression System
+### US-018: Implement Progression System
 **Order: 18**
 **Description:** As a developer, I want a progression system so that features unlock as the player advances.
 
@@ -323,10 +349,10 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 - [ ] Create `Vibex.Progression` module
 - [ ] Implement stage unlock conditions for stages 2-5
 - [ ] `check_progression/1` returns `{:advance, new_stage}` or `:no_change`
-- [ ] Stage 2: total production >= 100
-- [ ] Stage 3: has barracks AND militia count >= 10
-- [ ] Stage 4: has iron forge AND iron production >= 20
-- [ ] Stage 5: completed missions >= 5
+- [ ] Stage 2: Town Hall level >= 2 AND total production >= 50
+- [ ] Stage 3: Town Hall level >= 3 AND has Barracks AND militia count >= 10
+- [ ] Stage 4: Town Hall level >= 4 AND has Iron Forge AND iron production >= 20 AND has Watchtower
+- [ ] Stage 5: Town Hall level >= 5 AND completed missions >= 5
 - [ ] Lock/unlock UI elements based on stage
 - [ ] `mix test && mix credo --strict` pass
 
@@ -338,7 +364,7 @@ Goal: Add building construction, unit recruitment, and mission systems. All tabs
 
 Goal: Complete new player experience and add stage advancement notifications.
 
-### US-020: Initialize New Player Settlement
+### US-019: Initialize New Player Settlement
 **Order: 19**
 **Description:** As a new player, I want a starter settlement so that I can begin playing.
 
@@ -349,7 +375,7 @@ Goal: Complete new player experience and add stage advancement notifications.
 - [ ] Settlement starts with base storage capacity (500 each)
 - [ ] `mix test && mix credo --strict` pass
 
-### US-018: Add Stage Advancement Notifications
+### US-020: Add Stage Advancement Notifications
 **Order: 20**
 **Description:** As a player, I want to be notified when I advance stages so that I know what I unlocked.
 
@@ -418,23 +444,23 @@ Goal: Complete new player experience and add stage advancement notifications.
 
 | Order | Phase | US# | Description | Checkpoint |
 |-------|-------|-----|-------------|------------|
-| 1 | 1 | US-013 | Overview Tab (mock) | |
-| 2 | 1 | US-014 | Buildings Tab (mock) | |
-| 3 | 1 | US-015 | Units Tab (mock) | |
-| 4 | 1 | US-016 | Missions Tab (mock) | |
-| 5 | 1 | US-017 | Tab Navigation | **Checkpoint 1** |
-| 6 | 2 | US-001 | Settlement Schema | |
-| 7 | 2 | US-005 | SettlementServer GenServer | |
-| 8 | 2 | US-006 | Resource Calculation | |
-| 9 | 2 | US-019 | Auth Routing | **Checkpoint 2** |
-| 10 | 3 | US-002 | Building Schema | |
-| 11 | 3 | US-003 | Unit Schema | |
-| 12 | 3 | US-004 | Mission Schemas | |
-| 13 | 3 | US-007 | Building Construction | |
-| 14 | 3 | US-008 | Building Upgrades | |
-| 15 | 3 | US-009 | Unit Recruitment | |
-| 16 | 3 | US-012 | Seed Missions | |
-| 17 | 3 | US-011 | Mission System | |
-| 18 | 3 | US-010 | Progression System | **Checkpoint 3** |
-| 19 | 4 | US-020 | New Player Init | |
-| 20 | 4 | US-018 | Stage Notifications | **Done** |
+| 1 | 1 | US-001 | Overview Tab (mock) | |
+| 2 | 1 | US-002 | Buildings Tab (mock) | |
+| 3 | 1 | US-003 | Units Tab (mock) | |
+| 4 | 1 | US-004 | Missions Tab (mock) | |
+| 5 | 1 | US-005 | Tab Navigation | **Checkpoint 1** |
+| 6 | 2 | US-006 | Settlement Schema | |
+| 7 | 2 | US-007 | SettlementServer GenServer | |
+| 8 | 2 | US-008 | Resource Calculation | |
+| 9 | 2 | US-009 | Auth Routing | **Checkpoint 2** |
+| 10 | 3 | US-010 | Building Schema | |
+| 11 | 3 | US-011 | Unit Schema | |
+| 12 | 3 | US-012 | Mission Schemas | |
+| 13 | 3 | US-013 | Building Construction | |
+| 14 | 3 | US-014 | Building Upgrades | |
+| 15 | 3 | US-015 | Unit Recruitment | |
+| 16 | 3 | US-016 | Seed Missions | |
+| 17 | 3 | US-017 | Mission System | |
+| 18 | 3 | US-018 | Progression System | **Checkpoint 3** |
+| 19 | 4 | US-019 | New Player Init | |
+| 20 | 4 | US-020 | Stage Notifications | **Done** |

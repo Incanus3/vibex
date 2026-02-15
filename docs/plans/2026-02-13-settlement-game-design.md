@@ -11,6 +11,36 @@ Vibex is an idle/incremental settlement management game built with Phoenix LiveV
 - **Mission-driven gameplay**: Predetermined story missions early, procedural missions later
 - **Single settlement focus**: Design supports future multi-settlement expansion
 
+## Stage Unlocks
+
+| Stage | Buildings | Units | Resources | Requirements |
+|-------|-----------|-------|-----------|--------------|
+| 1 | Town Hall, Farm, Lumber Mill, Quarry, Granary, Warehouse, Treasury | - | Gold, Wood, Stone, Food | Starting stage |
+| 2 | Barracks | Militia | - | Town Hall level 2, total production >= 50 |
+| 3 | Mine, Iron Forge | Swordsman, Archer | Iron | Town Hall level 3, Barracks built, 10+ militia |
+| 4 | Watchtower | - | - | Town Hall level 4, Iron Forge built, iron production >= 20 |
+| 5 | Crystal Refinery, Crystal Vault | Mage | Crystal | Town Hall level 5, 5+ completed missions |
+
+## Town Hall
+
+The Town Hall is the main settlement building and progression gateway:
+- **Building level cap**: Other buildings capped at `Town Hall level + 2`
+- **Upgrade prerequisites**: Tied to stage unlock conditions (see table above)
+- **Central role**: Town Hall level gates access to new building types
+
+### Town Hall Upgrade Prerequisites
+
+| Town Hall Level | Prerequisites to Upgrade |
+|-----------------|--------------------------|
+| 1 → 2 | Total production >= 50, 500 gold, 200 wood, 200 stone |
+| 2 → 3 | Barracks built, 10+ militia |
+| 3 → 4 | Iron Forge built, iron production >= 20 |
+| 4 → 5 | Watchtower built, 5+ completed missions |
+
+## Building Instances
+
+No limits on building instances per type for MVP. Players may build freely within the 36-slot grid. Constraints can be added post-MVP based on player behavior.
+
 ---
 
 ## Architecture
@@ -68,13 +98,18 @@ User action → LiveView → SettlementServer (GenServer) → State update → A
 ```elixir
 %Building{
   settlement_id: ...,
-  type: :farm | :lumber_mill | :quarry | :mine | :iron_forge | :crystal_refinery |
-         :barracks | :town_hall | :watchtower |
+  type: :town_hall | :farm | :lumber_mill | :quarry | :mine | :iron_forge | :crystal_refinery |
+         :barracks | :watchtower |
          :granary | :warehouse | :treasury | :crystal_vault,
   level: 1..10,
-  position: 1..36
+  position: {row, col}  # e.g., {1, 1} for top-left, {6, 6} for bottom-right
 }
 ```
+
+**Position System:**
+- Grid is 6x6 (36 slots)
+- Position stored as `{row, col}` tuple where row and col are 1-6
+- More readable for debugging and extensible for future grid sizes
 
 ### Unit
 
@@ -171,25 +206,29 @@ Storage buildings increase capacity progressively:
 
 ## Buildings
 
+### Main Building
+
+| Building | Purpose | Unlocks Stage |
+|----------|---------|---------------|
+| Town Hall | Progression gateway, caps other building levels | 1 |
+
 ### Production Buildings
 
-| Building | Produces | Max Instances |
+| Building | Produces | Unlocks Stage |
 |----------|----------|---------------|
-| Farm | Food | 6 |
-| Lumber Mill | Wood | 6 |
-| Quarry | Stone | 6 |
-| Mine | Iron | 6 |
-| Iron Forge | Iron bonus | 1 |
-| Crystal Refinery | Crystal | 1 |
+| Farm | Food | 1 |
+| Lumber Mill | Wood | 1 |
+| Quarry | Stone | 1 |
+| Mine | Iron | 3 |
+| Iron Forge | Iron bonus | 3 |
+| Crystal Refinery | Crystal | 5 |
 
 ### Special Buildings
 
-| Building | Unlocks Stage | Purpose |
-|----------|---------------|---------|
-| Town Hall | 1 | Unlocks progression milestones |
-| Barracks | 2 | Unit recruitment |
-| Watchtower | 4 | Missions |
-| Crystal Refinery | 5 | Crystal production, mages |
+| Building | Purpose | Unlocks Stage |
+|----------|---------|---------------|
+| Barracks | Unit recruitment | 2 |
+| Watchtower | Missions | 4 |
 
 ### Storage Buildings
 
@@ -205,6 +244,8 @@ Storage buildings increase capacity progressively:
 - Cost formula: `base_cost × 1.8^(level - 1)`
 - Build time: instant for MVP
 - Grid: 6x6 (36 slots)
+- Building level cap: `Town Hall level + 2` (except Town Hall itself)
+- No limits on building instances per type for MVP
 
 ---
 
@@ -212,26 +253,30 @@ Storage buildings increase capacity progressively:
 
 ### Stage Unlocks
 
-| Stage | Unlocks |
-|-------|---------|
-| 1 | Food, Wood, Stone, Gold + Farm, Lumber Mill, Quarry + Storage buildings |
-| 2 | Barracks + Militia (basic unit) |
-| 3 | Iron + Mine + Iron Forge + Swordsman, Archer |
-| 4 | Watchtower + Missions |
-| 5 | Crystal + Crystal Refinery + Crystal Vault + Mage |
+| Stage | Buildings | Units | Resources | Requirements |
+|-------|-----------|-------|-----------|--------------|
+| 1 | Town Hall, Farm, Lumber Mill, Quarry, Granary, Warehouse, Treasury | - | Gold, Wood, Stone, Food | Starting stage |
+| 2 | Barracks | Militia | - | Town Hall level 2, total production >= 50 |
+| 3 | Mine, Iron Forge | Swordsman, Archer | Iron | Town Hall level 3, Barracks built, 10+ militia |
+| 4 | Watchtower | - | - | Town Hall level 4, Iron Forge built, iron production >= 20 |
+| 5 | Crystal Refinery, Crystal Vault | Mage | Crystal | Town Hall level 5, 5+ completed missions |
 
-### Progression Triggers
+### Progression Conditions
 
 Stage advancement checked after each building completion:
 
 ```elixir
 @progression_conditions %{
-  2 => fn s -> total_production(s) >= 100 end,
-  3 => fn s -> has_building?(s, :barracks) && unit_count(s, :militia) >= 10 end,
-  4 => fn s -> has_building?(s, :iron_forge) && production_rate(s, :iron) >= 20 end,
-  5 => fn s -> completed_missions(s) >= 5 end
+  2 => fn s -> town_hall_level(s) >= 2 && total_production(s) >= 50 end,
+  3 => fn s -> town_hall_level(s) >= 3 && has_building?(s, :barracks) && unit_count(s, :militia) >= 10 end,
+  4 => fn s -> town_hall_level(s) >= 4 && has_building?(s, :iron_forge) && production_rate(s, :iron) >= 20 && has_building?(s, :watchtower) end,
+  5 => fn s -> town_hall_level(s) >= 5 && completed_missions(s) >= 5 end
 }
 ```
+
+### Town Hall Level Cap
+
+Other buildings are capped at `Town Hall level + 2`. This creates a natural progression where players must upgrade the Town Hall before advancing other buildings further.
 
 ---
 
@@ -402,9 +447,11 @@ CREATE TABLE buildings (
   settlement_id UUID REFERENCES settlements NOT NULL,
   type TEXT NOT NULL,
   level INTEGER NOT NULL DEFAULT 1,
-  position INTEGER NOT NULL,
+  position_row INTEGER NOT NULL,
+  position_col INTEGER NOT NULL,
   inserted_at TIMESTAMP NOT NULL,
-  updated_at TIMESTAMP NOT NULL
+  updated_at TIMESTAMP NOT NULL,
+  UNIQUE(settlement_id, position_row, position_col)
 );
 
 CREATE TABLE units (
